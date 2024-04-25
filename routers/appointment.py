@@ -1,16 +1,17 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
 from services.appointment import AppointmentService
-from schema.appointment import AppointmentCreate, appointments, AppointmentStatus
-from schema.doctor import doctors
+from schemas.appointment import AppointmentCreate, appointments, AppointmentStatus
+from schemas.doctor import doctors
+from routers.doctor import set_avalilability_status
 
-appointment_router = APIRouter()
+router = APIRouter()
 
 
-#Only patients creates Appointments and if patient not available, proper response codes are given from fuction in service
-@appointment_router.post("/book", status_code= status.HTTP_201_CREATED)
+
+@router.post("/book", status_code= status.HTTP_201_CREATED)
 def book_appointment(payload : AppointmentCreate):
     data = AppointmentService.create_appointment(payload)
     return {
@@ -18,11 +19,11 @@ def book_appointment(payload : AppointmentCreate):
         "data" : data
     }
 
-@appointment_router.get("/get", status_code=status.HTTP_200_OK)
+@router.get("/get", status_code=status.HTTP_200_OK)
 def get_appointments():
-    return appointments
+     return appointments
 
-@appointment_router.get("/get/{id}", status_code=status.HTTP_200_OK)
+@router.get("/get/{id}", status_code=status.HTTP_200_OK)
 def get_appointment_by_id(id : int):
       appointment = AppointmentService.process_appointment_by_id(id)
       print(appointment)
@@ -31,48 +32,58 @@ def get_appointment_by_id(id : int):
             "data" : appointment   
       }            
     
-@appointment_router.put("/process_appointments/{id}", status_code=status.HTTP_202_ACCEPTED)
+@router.put("/process_appointments/{id}", status_code=status.HTTP_202_ACCEPTED)
 def process_appointments(appointment_id : Annotated[int, Depends(AppointmentService.does_appointments_exist)]):
-
-    doctors_values = list(doctors.values())
-    for doctor in doctors_values:
-                if appointment_id == doctor.id:
-                    doctor.is_available = True
-
-    for appointment in appointments:
-        if appointment.id == appointment_id:
-            # Checks If appointment with provided id was already cancelled
-            if appointment.status == AppointmentStatus.canceled.value:
-                 return {
-                      "message": "This appointment was already canceled hence cannot be processed"
-                 }
-           
-            appointment.status = AppointmentStatus.completed.value
-
-            return {
-            "message" : "Appointment Processed Successfully"
-            } 
-
-@appointment_router.put("/cancel_appointment/{id}",status_code=status.HTTP_202_ACCEPTED)
-def cancel_appointment(appointment_id : Annotated [int, Depends(AppointmentService.does_appointments_exist)]):
-       
-        doctors_values = list(doctors.values())
-        for doctor in doctors_values:
-                if appointment_id == doctor.id:
-                    doctor.is_available = True
     
+    appointment = AppointmentService.process_appointment_by_id(appointment_id)
+   
+    if appointment.status == AppointmentStatus.canceled.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This appointment was already canceled and cannot be processed."
+        )
+    else:
+        for doctor in doctors.values():
+            if doctor == appointment.doctor:
+                doctor.is_available = True
 
+        appointment.status = AppointmentStatus.completed.value
+
+        return {
+        "message": "Appointment Processed Successfully"
+        }
+
+@router.put("/cancel_appointment/{id}", status_code=status.HTTP_202_ACCEPTED)
+def cancel_appointment(appointment_id : Annotated [int, Depends(AppointmentService.does_appointments_exist)]):
+     
+        doctors_values = list(doctors.values())
         for appointment in appointments:
             if appointment.id == appointment_id:
+                for doctor in doctors_values:  
+                    if doctor == appointment.doctor:
+                      doctor.is_available = True
                 if appointment.status == AppointmentStatus.completed.value:
-                            return {
-                      "message": "This appointment was already processed hence cannot be cancelled"
-                 }
+                    raise HTTPException (
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="This appointment was already processed and cannot be cancelled."
+                    )
                 appointment.status = AppointmentStatus.canceled
                 return {
-                 "message" : "Appointment Cancelled Successfully"
+                    "message" : "Appointment Cancelled Successfully"
                     }
      
+     
+     
+
+
+        
+
+            
+
+    
+    
+    
+    
      
      
 

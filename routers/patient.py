@@ -1,31 +1,62 @@
-from fastapi import APIRouter, Response
+from typing import Annotated
 
-from schema.patient import patients, PatientCreateEdit, Patient
-from services.patient import PatientSerivce
+from fastapi import APIRouter, status, Depends
 
-patient_router = APIRouter()
+from services.patient import PatientService
+from schemas.appointment import appointments, AppointmentStatus
+from schemas.patient import PatientCreate, patients
 
-@patient_router.get('/', status_code=200)
+router = APIRouter()
+
+@router.post("/create", status_code=status.HTTP_201_CREATED)
+def create_patient(payload : PatientCreate):
+    data = PatientService.create_doctor(payload)
+    return data
+
+
+@router.get("/get", status_code= status.HTTP_200_OK)
 def get_patients():
-    data = PatientSerivce.get_patients()
-    return {'message': 'successful', 'data': data}
+    data = PatientService.process_patients()
+    return {
+        "message" : "Success",
+        "data" : data
+    }
 
-@patient_router.get('/{id}', status_code=200)
-def get_patient_by_id(id:int):
-    data =  PatientSerivce.get_patient_by_id(id)
-    return {'message': 'successful', 'data': data} 
+@router.get("/get/{id}", status_code=status.HTTP_200_OK)
+def get_patient_by_id(id : int):
+    data = PatientService.process_patient_by_id(id)
+    return data
 
-@patient_router.post('/', status_code=201)
-def create_patient(payload: PatientCreateEdit):
-    data = PatientSerivce.create_patient(payload)
-    return {'message': 'Created', 'data': data}
+@router.put("/edit", status_code=status.HTTP_202_ACCEPTED)
+def edit_patient(patient_id : int, payload : PatientCreate):
+    curr_patient = PatientService.fetch_patient_by_id(patient_id)
+    curr_patient.name = payload.name
+    curr_patient.age = payload.age
+    curr_patient.gender = payload.gender
+    curr_patient.weight = payload.weight
+    curr_patient.height = payload.height
+    curr_patient.phone = payload.phone
 
-@patient_router.put('/{patient_id}', status_code=200)
-def edit_patient(patient_id: int, payload: PatientCreateEdit):
-    data = PatientSerivce.edit_patient(payload)
-    return {'message': 'success', 'data': data}
+    return {
+        "message" : "Doctor Successfully updated",
+        "data" : curr_patient
+    }
 
-@patient_router.delete('/{patient_id}')
-def delete_patient(patient_id: int):
-    PatientSerivce.delete_patient(patient_id)
-    return {'messge': 'user deleted successfully.'}
+@router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_patient(patient_id : int):
+    curr_patient = PatientService.fetch_patient_by_id(patient_id)
+
+    for appointment in appointments:
+        if appointment.patient == curr_patient:
+            break
+        appointment.status = AppointmentStatus.canceled.value
+
+
+        appointed_doctor = appointment.doctor
+        appointed_doctor.is_available = True
+
+    del patients[patient_id]
+
+    return {
+        "message" : "Patient deleted successfully"
+    }

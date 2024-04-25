@@ -1,56 +1,61 @@
-from fastapi import HTTPException
-from schema.doctor import doctors, Doctor, DoctorCreateEdit
+from fastapi import HTTPException, status
 
-class DoctorSerivce:
+from schemas.doctor import doctors, DoctorCreate, Doctor
+
+class DoctorService:
 
     @staticmethod
-    def parse_doctor(doctor_data):
+# Fetches all doctors
+    def process_doctors(doctors):
         data = []
-        for cust in doctors:
-            data.append(doctor_data[cust])
+        for doctor_id in doctors:
+            data.append(doctors[doctor_id])
+        return {
+            "message": "Successful",
+            "data" : data
+        }
+    
+    @staticmethod
+    #fetches doctor with provided id
+    def process_doctor_by_id(id):
+        data = doctors.get(id)
+        if data is None:  
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail= f"No Doctor with id '{id}'  found"
+            )
         return data
-    
+
     @staticmethod
-    def get_doctor_by_id(doctor_id:int):
-      
-       for doctor in doctors: 
-        if doctor.id == doctor_id:
-         
-         
-            raise HTTPException(detail='doctor not found.', status_code=404)
-        return doctor
-    
-    @staticmethod
-    def create_doctor(doctor_data: DoctorCreateEdit):
-        id = len(doctors)
+#creates  a doctor
+    def create_doctor(payload : DoctorCreate):
+        id = len(doctors) + 1
         doctor = Doctor(
-            id=id,
-            **doctor_data.model_dump()
-        )
-        doctors[id] = doctor
-        doctors.append(doctor)
-        return doctor
-    
-    @staticmethod
-    def edit_doctor(payload: DoctorCreateEdit):
-        id = len(doctors)
-        doctor = Doctor(
-            id=id,
+            id = id,
             **payload.model_dump()
         )
-        doctors[id] = doctor
+        doctors[id] =doctor
         return doctor
-    
+        
     @staticmethod
-    def delete_doctor(doctor_id: int):
-        patient = doctors.get(doctor_id)
-        if not patient:
-            raise HTTPException(detail='doctor not found.', status_code=404)
-        del doctors[doctor_id]
+    #fetches doctor from database and returns proper response if doctor with provided id is unavailable, for edit and delete of a doctor
+    def fetch_doctor_id(doctor_id : int):
+        curr_doctor = None
+        doctors_values = list(doctors.values())
+        for doctor in doctors_values:
+                    if doctor.id == doctor_id:
+                        curr_doctor = doctor
+                        break
+                        
+        if not curr_doctor: 
+            raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"No Doctor with id {doctor_id}  available"
+                        )
+        return curr_doctor
+        
 
+        
+        
 
-
-
-
-
-Doctor_services = DoctorSerivce()
+     

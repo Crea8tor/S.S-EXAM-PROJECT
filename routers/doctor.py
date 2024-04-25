@@ -1,31 +1,82 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, status
 
-from schema.doctor import doctors, DoctorCreateEdit
-from services.doctor import DoctorSerivce
+from schemas.doctor import doctors, DoctorCreate
+from schemas.appointment import appointments, AppointmentStatus
+from services.doctor import DoctorService
 
-doctor_router = APIRouter()
 
-@doctor_router.get('/', status_code=200)
+router = APIRouter()
+
+@router.post("/create", status_code= status.HTTP_201_CREATED)
+def create_doctor(payload : DoctorCreate):
+    data = DoctorService.create_doctor(payload)
+    return {
+        "message" : "Doctor Successfully created",
+        "data" : data
+    }
+
+
+@router.get("/get", status_code=status.HTTP_200_OK)
 def get_doctors():
-    data = DoctorSerivce.parse_doctor()
-    return {'message': 'successful', 'data': data}
+    data = DoctorService.process_doctors(doctors)
+    return {
+        "message" : "Successful",
+        "data" : data
+    }
 
-@doctor_router.get('/{doctor_id}', status_code=200)
-def get_doctor_by_id(doctor_id: int):
-    data =  DoctorSerivce.get_doctor_by_id(doctor_id)
-    return {'message': 'successful', 'data': data} 
 
-@doctor_router.post('/', status_code=201)
-def create_doctor(payload: DoctorCreateEdit):
-    data = DoctorSerivce.create_doctor(payload)
-    return {'message': 'Created', 'data': data}
+@router.get("/get/{id}", status_code=status.HTTP_200_OK)
+def get_doctor_by_id(id: int):
+    data = DoctorService.process_doctor_by_id(id)
+    return {
+        "message" : "Successful",
+        "data" : data
+    }
 
-@doctor_router.put('/{doctor_id}', status_code=200)
-def edit_doctor(doctor_id: int, payload: DoctorCreateEdit):
-    data = DoctorSerivce.edit_doctor(payload)
-    return {'message': 'success', 'data': data}
 
-@doctor_router.delete('/{doctor_id}')
-def delete_doctor(doctor_id: int):
-    DoctorSerivce.delete_doctor(doctor_id)
-    return {'messge': 'doctor deleted successfully.'}
+@router.put("/edit/{id}", status_code=status.HTTP_202_ACCEPTED)
+def edit_doctor(doctor_id : int, payload : DoctorCreate):
+    curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
+
+    curr_doctor.name = payload.name
+    curr_doctor.specialization = payload.specialization
+    curr_doctor.phone = payload.phone
+    return {
+        "message" : "Doctor Successfully updated",
+        "data" : curr_doctor
+    }
+
+
+@router.delete("/delete/{id}",  status_code= status.HTTP_204_NO_CONTENT)
+def delete_doctor(doctor_id : int):
+   
+    curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
+    if curr_doctor.is_available is False:
+        for appointment in appointments:
+            if appointment.doctor == curr_doctor:
+                appointment.status = AppointmentStatus.canceled.value
+
+    del doctors[doctor_id]
+    return {
+        "message": f"Doctor with id {doctor_id} has been deleted hence not available, Active appointment is also cancelled. Appointed patient to doctor id '{doctor_id}' can rebook an Appointment"
+    }
+       
+
+
+@router.patch("/set_to_unavailable", status_code=status.HTTP_202_ACCEPTED)
+def set_avalilability_status(doctor_id : int):
+    curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
+    curr_doctor.is_available = False
+    for appointment in appointments:
+        if appointment.doctor == curr_doctor:
+                appointment.status = AppointmentStatus.canceled.value
+    return {
+        "message": f"Doctor with id {doctor_id} is not available, all current appointments are also cancelled. Appointed patient to doctor id '{doctor_id}' can rebook an Appointment",
+    }
+       
+
+    
+
+
+    
+    

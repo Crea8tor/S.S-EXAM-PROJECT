@@ -1,42 +1,48 @@
 from fastapi import HTTPException, status, Depends
 
-from schema.appointment import Appointment, appointments, AppointmentCreate, AppointmentStatus
-from schema.patient import patients
-from schema.doctor import doctors,Doctor,DoctorStatus
+from schemas.appointment import Appointment, appointments, AppointmentCreate, AppointmentStatus
+from schemas.patient import patients
+from schemas.doctor import doctors
 
 class AppointmentService:
      
-
- 
-     @staticmethod      
-     def check_availability(payload: Doctor):
-        doc_status = payload.is_available
-        for stat in doc_status:
-            doctor: Doctor = doctors.get(str(stat))
-            if doctor.is_available == False :
-                # logger.warning("Product is no more available")
-             raise HTTPException(status_code=400, detail='doctor is unavailable')
-            # product.quantity_available -= 1
-        return payload
-
-
-
-
+     @staticmethod
+     def check_doctor_availability():
+         doctors_values = list(doctors.values())
+         for doctor in doctors_values:
+             if doctor.is_available == True:
+                return doctor
+         raise HTTPException(
+             status_code=status.HTTP_404_NOT_FOUND,
+             detail="No available doctors"
+         )
+     
 
      @staticmethod
-     #book an Appointment
-     def create_appointment(payload: AppointmentCreate = Depends(check_availability)):
+     def patient_availability(payload : AppointmentCreate):
+         if payload.patient not in patients:
+             raise HTTPException(
+                 status_code=status.HTTP_404_NOT_FOUND,
+                 detail= f"No Patient with id '{payload.patient}'"
+             )
+         return payload.patient
+
+     @staticmethod
+     #Creates Appointment
+     def create_appointment(payload : AppointmentCreate):
         appointment_id = len(appointments) + 1
-        # current_patient = AppointmentService.patient_availability(payload)
-        patient: int = payload.patient
+        current_patient = AppointmentService.patient_availability(payload)
+        available_doctor = AppointmentService.check_doctor_availability()
         appointment = Appointment(
             id = appointment_id,
-            patient = patient,
-            doctor = doctors[0],
+            patient = current_patient,
+            doctor = available_doctor,
             date = payload.date,
             status = AppointmentStatus.active.value
         )
 
+        #Code fragment ensures appointed doctor availability is set to false which makes him unavailable
+        available_doctor.is_available = False
         appointments.append(appointment)
         return appointment
      
@@ -47,7 +53,7 @@ class AppointmentService:
          if appointment_id not in appointment_ids:
             raise HTTPException(
                  status_code= status.HTTP_404_NOT_FOUND,
-                 detail= f"Appointment with id '{appointment_id}' not found"
+                 detail= f"No Appointment with id '{appointment_id}' found"
              )
          return appointment_id
      
@@ -59,8 +65,8 @@ class AppointmentService:
              
 
      @staticmethod
-     #get appointment by id
-     def get_appointment_by_id(id : int):
+     #feteches appointment with provided id
+     def process_appointment_by_id(id : int):
          curr_appointment = None
 
          for appointment in appointments:
@@ -70,20 +76,14 @@ class AppointmentService:
          if not curr_appointment:
                  raise HTTPException(
                      status_code=status.HTTP_404_NOT_FOUND,
-                     detail= f"Appointment with id '{id}' not found"
+                     detail= f"No Appointment with id '{id}' found"
                  )
 
          return curr_appointment
     
     
      
-     
-    #  @staticmethod
-    #  def delete_appointment(appointment_id):
-    #    appointments: Appointment  = AppointmentHelpers.get_appointment_by_id(appointment_id)
-    #  if not appointment:
-    #      raise HTTPException(detail='Appointment not found', status_code=404)
-    #     del appointments[appointment_id]   
+        
 
              
  
@@ -97,55 +97,3 @@ class AppointmentService:
 
          
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# from fastapi import HTTPException
-
-# from schema.appointment import AppointmentsCreate, Appointments, appointments
-# from schema.patient import Patients, patients
-# from schema.doctor import Doctors, doctors
-# from utils.appointment import AppointmentHelpers
-
-# class AppointmentService:
-
-#     @staticmethod
-#     def create_appointment(payload: AppointmentsCreate):
-#         id = len(appointments)
-#         patient: Patients = patients[payload.patient]
-#         doctor: Doctors = doctors[payload.doctor]
-#         appointment = Appointments(
-#             id=id,
-#             patient=patient,
-#             doctor=payload.doctor,
-#             date=payload.date,
-#         )
-#         appointments.append(appointment)
-#         return appointment
-    
-
-
-
-
-#     @staticmethod
-#     def get_appointment_by_id(appointment_id: int):
-#         appointment = AppointmentHelpers.get_appointment_by_id(appointment_id)
-#         if not appointment:
-#             raise HTTPException(detail='Appointment not found', status_code=404)
-#         return appointment
-    
-   
