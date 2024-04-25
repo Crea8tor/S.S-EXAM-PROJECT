@@ -1,16 +1,31 @@
-from fastapi import FastAPI
-from fastapi import status
+from fastapi import FastAPI, status
 
-from routers.patient import patient_router
-from routers.appointment import appointment_router
-from routers.doctor import doctor_router
+import routers.appointment
+import routers.doctor
+import routers.patient
 
 app = FastAPI()
 
-app.include_router(router=patient_router, prefix='/patients', tags=['patients'])
-app.include_router(router=appointment_router, prefix='/patients', tags=['appointments'])
-app.include_router(router=doctor_router, prefix='/doctors', tags=['doctors'])
+app.include_router(
+    router= routers.doctor.router,
+    prefix="/doctors",
+    tags=["Doctors"]
+)
+
+app.include_router(
+    router= routers.patient.router,
+    prefix= "/patients",
+    tags= ["Patients"]
+)
+
+app.include_router(
+    router= routers.appointment.router,
+    prefix = "/appointments",
+    tags= ["Appointments"]
+)
 
 @app.get("/Home", status_code=status.HTTP_200_OK, tags=["Home Page"])
-def index():
-    return "Welcome to Ace Medical Appointment Api"
+def home():
+    return {
+        "message" :"Welcome to our medical Application!"
+    }
