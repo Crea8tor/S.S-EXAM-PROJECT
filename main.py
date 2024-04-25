@@ -1,8 +1,8 @@
 from fastapi import FastAPI, status
 
-import routers.appointment
-import routers.doctor
-import routers.patient
+from routers.doctor import doctor_router
+from routers.patient import patient_router
+from routers.appointment import appointment_router
 
 app = FastAPI()
 

@@ -5,9 +5,9 @@ from schemas.appointment import appointments, AppointmentStatus
 from services.doctor import DoctorService
 
 
-router = APIRouter()
+doctor_router = APIRouter()
 
-@router.post("/create", status_code= status.HTTP_201_CREATED)
+@doctor_router.post("/create", status_code= status.HTTP_201_CREATED)
 def create_doctor(payload : DoctorCreate):
     data = DoctorService.create_doctor(payload)
     return {
@@ -16,7 +16,7 @@ def create_doctor(payload : DoctorCreate):
     }
 
 
-@router.get("/get", status_code=status.HTTP_200_OK)
+@doctor_router.get("/get", status_code=status.HTTP_200_OK)
 def get_doctors():
     data = DoctorService.process_doctors(doctors)
     return {
@@ -25,7 +25,7 @@ def get_doctors():
     }
 
 
-@router.get("/get/{id}", status_code=status.HTTP_200_OK)
+@doctor_router.get("/get/{id}", status_code=status.HTTP_200_OK)
 def get_doctor_by_id(id: int):
     data = DoctorService.process_doctor_by_id(id)
     return {
@@ -34,7 +34,7 @@ def get_doctor_by_id(id: int):
     }
 
 
-@router.put("/edit/{id}", status_code=status.HTTP_202_ACCEPTED)
+@doctor_router.put("/edit/{id}", status_code=status.HTTP_202_ACCEPTED)
 def edit_doctor(doctor_id : int, payload : DoctorCreate):
     curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
 
@@ -47,7 +47,7 @@ def edit_doctor(doctor_id : int, payload : DoctorCreate):
     }
 
 
-@router.delete("/delete/{id}",  status_code= status.HTTP_204_NO_CONTENT)
+@doctor_router.delete("/delete/{id}",  status_code= status.HTTP_204_NO_CONTENT)
 def delete_doctor(doctor_id : int):
    
     curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
@@ -63,7 +63,7 @@ def delete_doctor(doctor_id : int):
        
 
 
-@router.patch("/set_to_unavailable", status_code=status.HTTP_202_ACCEPTED)
+@doctor_router.patch("/set_to_unavailable", status_code=status.HTTP_202_ACCEPTED)
 def set_avalilability_status(doctor_id : int):
     curr_doctor = DoctorService.fetch_doctor_id(doctor_id)
     curr_doctor.is_available = False

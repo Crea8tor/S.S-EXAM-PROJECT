@@ -6,15 +6,15 @@ from services.patient import PatientService
 from schemas.appointment import appointments, AppointmentStatus
 from schemas.patient import PatientCreate, patients
 
-router = APIRouter()
+patient_router = APIRouter()
 
-@router.post("/create", status_code=status.HTTP_201_CREATED)
+@patient_router.post("/create", status_code=status.HTTP_201_CREATED)
 def create_patient(payload : PatientCreate):
     data = PatientService.create_doctor(payload)
     return data
 
 
-@router.get("/get", status_code= status.HTTP_200_OK)
+@patient_router.get("/get", status_code= status.HTTP_200_OK)
 def get_patients():
     data = PatientService.process_patients()
     return {
@@ -22,12 +22,12 @@ def get_patients():
         "data" : data
     }
 
-@router.get("/get/{id}", status_code=status.HTTP_200_OK)
+@patient_router.get("/get/{id}", status_code=status.HTTP_200_OK)
 def get_patient_by_id(id : int):
     data = PatientService.process_patient_by_id(id)
     return data
 
-@router.put("/edit", status_code=status.HTTP_202_ACCEPTED)
+@patient_router.put("/edit", status_code=status.HTTP_202_ACCEPTED)
 def edit_patient(patient_id : int, payload : PatientCreate):
     curr_patient = PatientService.fetch_patient_by_id(patient_id)
     curr_patient.name = payload.name
@@ -42,7 +42,7 @@ def edit_patient(patient_id : int, payload : PatientCreate):
         "data" : curr_patient
     }
 
-@router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@patient_router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_patient(patient_id : int):
     curr_patient = PatientService.fetch_patient_by_id(patient_id)
 

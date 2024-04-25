@@ -7,11 +7,11 @@ from schemas.appointment import AppointmentCreate, appointments, AppointmentStat
 from schemas.doctor import doctors
 from routers.doctor import set_avalilability_status
 
-router = APIRouter()
+appointment_router = APIRouter()
 
 
 
-@router.post("/book", status_code= status.HTTP_201_CREATED)
+@appointment_router.post("/book", status_code= status.HTTP_201_CREATED)
 def book_appointment(payload : AppointmentCreate):
     data = AppointmentService.create_appointment(payload)
     return {
@@ -19,11 +19,11 @@ def book_appointment(payload : AppointmentCreate):
         "data" : data
     }
 
-@router.get("/get", status_code=status.HTTP_200_OK)
+@appointment_router.get("/get", status_code=status.HTTP_200_OK)
 def get_appointments():
      return appointments
 
-@router.get("/get/{id}", status_code=status.HTTP_200_OK)
+@appointment_router.get("/get/{id}", status_code=status.HTTP_200_OK)
 def get_appointment_by_id(id : int):
       appointment = AppointmentService.process_appointment_by_id(id)
       print(appointment)
@@ -32,7 +32,7 @@ def get_appointment_by_id(id : int):
             "data" : appointment   
       }            
     
-@router.put("/process_appointments/{id}", status_code=status.HTTP_202_ACCEPTED)
+@appointment_router.put("/process_appointments/{id}", status_code=status.HTTP_202_ACCEPTED)
 def process_appointments(appointment_id : Annotated[int, Depends(AppointmentService.does_appointments_exist)]):
     
     appointment = AppointmentService.process_appointment_by_id(appointment_id)
@@ -53,7 +53,7 @@ def process_appointments(appointment_id : Annotated[int, Depends(AppointmentServ
         "message": "Appointment Processed Successfully"
         }
 
-@router.put("/cancel_appointment/{id}", status_code=status.HTTP_202_ACCEPTED)
+@appointment_router.put("/cancel_appointment/{id}", status_code=status.HTTP_202_ACCEPTED)
 def cancel_appointment(appointment_id : Annotated [int, Depends(AppointmentService.does_appointments_exist)]):
      
         doctors_values = list(doctors.values())
