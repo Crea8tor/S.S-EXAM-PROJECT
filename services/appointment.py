@@ -28,7 +28,7 @@ class AppointmentService:
          return payload.patient
 
      @staticmethod
-     #Creates Appointment
+
      def create_appointment(payload : AppointmentCreate):
         appointment_id = len(appointments) + 1
         current_patient = AppointmentService.patient_availability(payload)
@@ -41,7 +41,7 @@ class AppointmentService:
             status = AppointmentStatus.active.value
         )
 
-        #Code fragment ensures appointed doctor availability is set to false which makes him unavailable
+      
         available_doctor.is_available = False
         appointments.append(appointment)
         return appointment
@@ -65,7 +65,7 @@ class AppointmentService:
              
 
      @staticmethod
-     #feteches appointment with provided id
+   
      def process_appointment_by_id(id : int):
          curr_appointment = None
 

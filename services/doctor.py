@@ -5,7 +5,7 @@ from schemas.doctor import doctors, DoctorCreate, Doctor
 class DoctorService:
 
     @staticmethod
-# Fetches all doctors
+
     def process_doctors(doctors):
         data = []
         for doctor_id in doctors:
@@ -16,7 +16,7 @@ class DoctorService:
         }
     
     @staticmethod
-    #fetches doctor with provided id
+
     def process_doctor_by_id(id):
         data = doctors.get(id)
         if data is None:  
@@ -27,7 +27,7 @@ class DoctorService:
         return data
 
     @staticmethod
-#creates  a doctor
+
     def create_doctor(payload : DoctorCreate):
         id = len(doctors) + 1
         doctor = Doctor(
@@ -38,7 +38,7 @@ class DoctorService:
         return doctor
         
     @staticmethod
-    #fetches doctor from database and returns proper response if doctor with provided id is unavailable, for edit and delete of a doctor
+   
     def fetch_doctor_id(doctor_id : int):
         curr_doctor = None
         doctors_values = list(doctors.values())

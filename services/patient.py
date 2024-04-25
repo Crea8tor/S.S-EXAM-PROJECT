@@ -40,7 +40,7 @@ class PatientService:
     
     @staticmethod
 
-    #fetches id and if not available, returns proper response
+ 
     def get_patient_by_id(patient_id):
         curr_patient = None
         patient_values = list(patients.values())
